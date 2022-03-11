@@ -19,11 +19,12 @@ except mariadb.Error as e:
 # Get Cursor
 cur = conn.cursor()
 
-# SQL
-
+# SQL Statement
 cur.execute('Select distinct entity_id FROM states')
 
+# Results
 for entity_id in cur:
    print(f"{entity_id}")
 
+#Close Connection
 conn.close()
