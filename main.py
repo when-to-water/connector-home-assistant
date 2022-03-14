@@ -1,30 +1,21 @@
 # Module imports
-import mariadb
 import sys
 import os
+import sqlalchemy
+from sqlalchemy import create_engine
+import pandas as pd
 
-# Connect to MariaDB Platform
-try:
-    conn = mariadb.connect(
-        user=os.environ.get('MARIADB_USER'),
-        password=os.environ.get('MARIADB_KEY'),
-        host=os.environ.get('MARIADB_HOST'),
-        port=int(os.environ.get('MARIADB_PORT')),
-        database=os.environ.get('MARIADB_DATABASE')
-    )
-except mariadb.Error as e:
-    print(f"Error connecting to MariaDB Platform: {e}")
-    sys.exit(1)
+strEngine = "mariadb+mariadbconnector://" + os.environ.get('MARIADB_USER') + ":" + os.environ.get('MARIADB_KEY') + "@" + \
+os.environ.get('MARIADB_HOST') + ":" + os.environ.get('MARIADB_PORT') + "/" + os.environ.get('MARIADB_DATABASE')
 
-# Get Cursor
-cur = conn.cursor()
+engine = sqlalchemy.create_engine(strEngine)
 
 # SQL Statement
-cur.execute('Select distinct entity_id FROM states')
+df = pd.read_sql("SELECT state_id,entity_id,state,attributes, \
+last_changed,last_updated,created,old_state_id \
+FROM states \
+WHERE entity_id LIKE '%efekta%'and state <>'unavailable' \
+ORDER BY `states`.`created`  DESC",engine)
 
-# Results
-for entity_id in cur:
-   print(f"{entity_id}")
-
-#Close Connection
-conn.close()
+#Results 
+print(df.head(5))
