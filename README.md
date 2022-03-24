@@ -4,5 +4,12 @@ Analyzing plant sensor data
 # Installation
 
 ```Shell
-pip install -r requirements.txt
+pipenv install
+```
+
+# Run
+
+```Shell
+pipenv shell
+python main.py
 ```
