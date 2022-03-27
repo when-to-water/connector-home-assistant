@@ -3,18 +3,21 @@ import os
 import sqlalchemy
 from sqlalchemy import create_engine
 import pandas as pd
+from dotenv import load_dotenv
+
+load_dotenv()
 
 strEngine = (
     "mariadb+mariadbconnector://"
-    + os.environ.get("MARIADB_USER")
+    + os.getenv("MARIADB_USER")
     + ":"
-    + os.environ.get("MARIADB_KEY")
+    + os.getenv("MARIADB_KEY")
     + "@"
-    + os.environ.get("MARIADB_HOST")
+    + os.getenv("MARIADB_HOST")
     + ":"
-    + os.environ.get("MARIADB_PORT")
+    + os.getenv("MARIADB_PORT")
     + "/"
-    + os.environ.get("MARIADB_DATABASE")
+    + os.getenv("MARIADB_DATABASE")
 )
 
 engine = sqlalchemy.create_engine(strEngine)
