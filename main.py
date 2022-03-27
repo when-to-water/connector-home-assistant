@@ -1,4 +1,3 @@
-# Module imports
 import sys
 import os
 import sqlalchemy
