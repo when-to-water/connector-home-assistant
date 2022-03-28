@@ -10,6 +10,8 @@ python-dotenv = "*"
 
 [dev-packages]
 black = "*"
+flake8 = "*"
+bandit = "*"
 
 [requires]
 python_version = "3.9"
