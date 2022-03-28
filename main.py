@@ -7,18 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-strEngine = (
-    "mariadb+mariadbconnector://"
-    + os.getenv("MARIADB_USER")
-    + ":"
-    + os.getenv("MARIADB_KEY")
-    + "@"
-    + os.getenv("MARIADB_HOST")
-    + ":"
-    + os.getenv("MARIADB_PORT")
-    + "/"
-    + os.getenv("MARIADB_DATABASE")
-)
+strEngine = f"mariadb+mariadbconnector://{os.getenv('MARIADB_USER')}:{os.getenv('MARIADB_KEY')}@{os.getenv('MARIADB_HOST')}:{os.getenv('MARIADB_PORT')}/{os.getenv('MARIADB_DATABASE')}"
 
 engine = sqlalchemy.create_engine(strEngine)
 
