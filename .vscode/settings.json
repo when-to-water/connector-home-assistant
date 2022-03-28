@@ -9,5 +9,8 @@
     "python.linting.flake8CategorySeverity.W": "Warning",
     "python.linting.flake8Args": [
         "--ignore=E501"
+      ],
+      "conventionalCommits.scopes": [
+        "connectors"
       ]
 }
