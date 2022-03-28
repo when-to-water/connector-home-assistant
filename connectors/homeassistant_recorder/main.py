@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-if (os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB"):
+if os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB":
     strEngine = (
         f"mariadb+mariadbconnector://{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_USER')}"
         f":{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_KEY')}"
