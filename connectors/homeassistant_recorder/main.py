@@ -6,12 +6,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-strEngine = (
-    f"mariadb+mariadbconnector://{os.getenv('MARIADB_USER')}"
-    f":{os.getenv('MARIADB_KEY')}"
-    f"@{os.getenv('MARIADB_HOST')}:{os.getenv('MARIADB_PORT')}"
-    f"/{os.getenv('MARIADB_DATABASE')}"
-)
+if (os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB"):
+    strEngine = (
+        f"mariadb+mariadbconnector://{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_USER')}"
+        f":{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_KEY')}"
+        f"@{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_HOST')}:{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_PORT')}"
+        f"/{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_DATABASE')}"
+    )
+else:
+    exit(f"Connector type '{os.getenv('WTW_CONNECTOR_TYPE')}' not supported")
 
 engine = sqlalchemy.create_engine(strEngine)
 
