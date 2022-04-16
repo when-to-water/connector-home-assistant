@@ -7,6 +7,7 @@ name = "pypi"
 sqlalchemy = "*"
 pandas = "*"
 python-dotenv = "*"
+pymysql = "*"
 
 [dev-packages]
 black = "*"
