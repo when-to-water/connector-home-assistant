@@ -12,6 +12,7 @@ def main():
     latest_timestamp = get_latest_timestamp()
     get_homeassistant_data(latest_timestamp)
 
+
 def get_homeassistant_data(latest_timestamp):
     if os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB":
         strEngine = (
@@ -42,8 +43,8 @@ def get_homeassistant_data(latest_timestamp):
     df["friendly_name"] = dftemp.apply(lambda x: x.get("friendly_name"))
     df["friendly_name"] = df["friendly_name"].str[:5]
     df.drop("attributes", inplace=True, axis=1)
-    print(df['measure_name'].unique())
-    
+    print(df["measure_name"].unique())
+
 
 def get_latest_timestamp():
 
@@ -52,12 +53,12 @@ def get_latest_timestamp():
 
     try:
         response = read_client.query(
-            QueryString="SELECT Max(time) AS MaxTimestamp FROM \"when-to-water\".\"sensor-data\""
+            QueryString='SELECT Max(time) AS MaxTimestamp FROM "when-to-water"."sensor-data"'
         )
     except Exception as e:
         print(f"An exception occured: {e}")
 
-    if response['Rows'][0]['Data'][0]['NullValue'] == True:
+    if response["Rows"][0]["Data"][0]["NullValue"] is True:
         return datetime.fromtimestamp(0)
 
     print(response)
