@@ -8,6 +8,7 @@ sqlalchemy = "*"
 pandas = "*"
 python-dotenv = "*"
 pymysql = "*"
+boto3 = "*"
 
 [dev-packages]
 black = "*"
