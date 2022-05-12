@@ -31,10 +31,11 @@ def get_homeassistant_data(latest_timestamp):
             "SELECT state_id,state as measure_value,attributes, created as timestamp "
             "FROM states "
             "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
-            f"AND created > '{latest_timestamp}' "
+            "AND created > %(latest_timestamp)s "
             "ORDER BY `states`.`created` ASC"
         ),
         engine,
+        params={"latest_timestamp": latest_timestamp},
     )
 
     dftemp = df["attributes"].apply(lambda x: ast.literal_eval(x))
