@@ -27,33 +27,20 @@ def get_homeassistant_data(latest_timestamp):
 
     engine = sqlalchemy.create_engine(strEngine)
 
-<<<<<<< Updated upstream
-    df = pd.read_sql(
-        (
-            "SELECT state_id,state as measure_value,attributes, created as timestamp "
-            "FROM states "
-            "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
-            "AND created > %(latest_timestamp)s "
-            "ORDER BY `states`.`created` ASC"
-        ),
-        engine,
-        params={"latest_timestamp": latest_timestamp},
-    )
-=======
     try:
         df = pd.read_sql(
             (
                 "SELECT state as MeasureValue,attributes, FLOOR(UNIX_TIMESTAMP(created)) as Time "
                 "FROM states "
                 "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
-                f"AND created > '{latest_timestamp}' "
+                "AND created > %(latest_timestamp)s "
                 "ORDER BY `states`.`created` ASC"
             ),
             engine,
+            params={"latest_timestamp": latest_timestamp},
         )
     except Exception as e:
         print(f"An exception occured: {e}")
->>>>>>> Stashed changes
 
     dftemp = df["attributes"].apply(lambda x: ast.literal_eval(x))
     df["Unit"] = dftemp.apply(lambda x: x.get("unit_of_measurement"))
