@@ -22,14 +22,15 @@ def main():
     )
     args = argparser.parse_args()
 
-    if args.dump_hass_df is False:
-        latest_timestamp = get_latest_timestamp()
-        df = get_homeassistant_data(latest_timestamp)
-        sent_data_to_timestream(df)
-    else:
-        print("Dumping homeassistant dataframe to json file (./hass.json)")
+    if args.dump_hass_df is True:
         df = get_homeassistant_data(datetime.fromtimestamp(0))
         df.to_json("./hass.json")
+        print("Dumping homeassistant dataframe to json file (./hass.json)")
+        return
+
+    latest_timestamp = get_latest_timestamp()
+    df = get_homeassistant_data(latest_timestamp)
+    sent_data_to_timestream(df)
 
 
 def get_homeassistant_data(latest_timestamp):
