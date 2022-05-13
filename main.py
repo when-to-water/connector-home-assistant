@@ -1,3 +1,4 @@
+import argparse
 import ast
 import os
 from datetime import datetime
@@ -10,9 +11,25 @@ from dotenv import load_dotenv
 
 def main():
     load_dotenv()
-    latest_timestamp = get_latest_timestamp()
-    df = get_homeassistant_data(latest_timestamp)
-    sent_data_to_timestream(df)
+
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument(
+        "--dump-hass-df",
+        nargs="?",
+        default=False,
+        const=True,
+        help="dump homeassistant dataframe to json file (./hass.json)",
+    )
+    args = argparser.parse_args()
+
+    if args.dump_hass_df is False:
+        latest_timestamp = get_latest_timestamp()
+        df = get_homeassistant_data(latest_timestamp)
+        sent_data_to_timestream(df)
+    else:
+        print("Dumping homeassistant dataframe to json file (./hass.json)")
+        df = get_homeassistant_data(datetime.fromtimestamp(0))
+        df.to_json("./hass.json")
 
 
 def get_homeassistant_data(latest_timestamp):
