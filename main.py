@@ -33,6 +33,11 @@ def main():
 
 
 def get_homeassistant_data(latest_timestamp):
+
+    if os.path.exists("./hass.json"):
+        df = pd.read_json("./hass.json")
+        return df
+
     if os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB":
         strEngine = (
             f"mariadb+pymysql://{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_USER')}"
