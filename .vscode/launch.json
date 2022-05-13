@@ -10,7 +10,18 @@
             "request": "launch",
             "program": "./main.py",
             "console": "integratedTerminal",
-            "justMyCode": false
+            "justMyCode": true
+        },
+        {
+            "name": "Python: main.py --dump-hass-df",
+            "type": "python",
+            "request": "launch",
+            "program": "./main.py",
+            "args": [
+                "--dump-hass-df"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

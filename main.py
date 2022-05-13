@@ -1,20 +1,43 @@
-import os
-import sqlalchemy
-import pandas as pd
+import argparse
 import ast
-from dotenv import load_dotenv
+import os
 from datetime import datetime
+
 import boto3
+import pandas as pd
+import sqlalchemy
+from dotenv import load_dotenv
 
 
 def main():
     load_dotenv()
-    latest_timestamp = get_latest_timestamp()
-    df = get_homeassistant_data(latest_timestamp)
-    sent_data_to_timestream(df)
+
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument(
+        "--dump-hass-df",
+        nargs="?",
+        default=False,
+        const=True,
+        help="dump homeassistant dataframe to json file (./hass.json)",
+    )
+    args = argparser.parse_args()
+
+    if args.dump_hass_df is False:
+        latest_timestamp = get_latest_timestamp()
+        df = get_homeassistant_data(latest_timestamp)
+        sent_data_to_timestream(df)
+    else:
+        print("Dumping homeassistant dataframe to json file (./hass.json)")
+        df = get_homeassistant_data(datetime.fromtimestamp(0))
+        df.to_json("./hass.json")
 
 
 def get_homeassistant_data(latest_timestamp):
+
+    if os.path.exists("./hass.json"):
+        df = pd.read_json("./hass.json")
+        return df
+
     if os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB":
         strEngine = (
             f"mariadb+pymysql://{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_USER')}"
