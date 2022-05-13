@@ -61,7 +61,7 @@ def get_latest_timestamp():
     response = ""
     try:
         response = read_client.query(
-            QueryString='SELECT Max(time) AS MaxTimestamp FROM \”when-to-water"."sensor-data"'
+            QueryString='SELECT Max(time) AS MaxTimestamp FROM "when-to-water"."sensor-data"'
         )
     except Exception as e:
         print(f"An exception occured: {e}")
