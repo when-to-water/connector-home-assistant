@@ -48,7 +48,7 @@ def get_homeassistant_data(latest_timestamp):
     df["MeasureName"] = df["SensorName"].str.split(" ").str[1]
     df["SensorName"] = df["SensorName"].str[:5]
     df["Time"] = df["Time"].apply(str)
-    df = df[df['SensorName'].isin(['PWS_1', 'PWS_2', 'PWS_3'])]
+    df = df[df["SensorName"].isin(["PWS_1", "PWS_2", "PWS_3"])]
     df.drop("attributes", inplace=True, axis=1)
     print(df.head())
     return df
@@ -57,11 +57,11 @@ def get_homeassistant_data(latest_timestamp):
 def get_latest_timestamp():
 
     read_client = boto3.client("timestream-query")
-    response = ""
 
+    response = ""
     try:
         response = read_client.query(
-            QueryString='SELECT Max(time) AS MaxTimestamp FROM "when-to-water"."sensor-data"'
+            QueryString='SELECT Max(time) AS MaxTimestamp FROM \”when-to-water"."sensor-data"'
         )
     except Exception as e:
         print(f"An exception occured: {e}")
@@ -80,21 +80,32 @@ def sent_data_to_timestream(df):
     for x in pd.unique(df["SensorName"]):
         for y in pd.unique(df["Unit"]):
             records = []
-            common_attributes = {'Dimensions': [{'Name': 'SensorName', 'Value': x}, {'Name': 'Unit', 'Value': y}], 'MeasureValueType': 'DOUBLE'}
-            dftemp = df[(df['SensorName'] == x) & (df['Unit'] == y)]
+            common_attributes = {
+                "Dimensions": [
+                    {"Name": "SensorName", "Value": x},
+                    {"Name": "Unit", "Value": y},
+                ],
+                "MeasureValueType": "DOUBLE",
+            }
+            dftemp = df[(df["SensorName"] == x) & (df["Unit"] == y)]
             dftemp = dftemp.drop(columns=["SensorName", "Unit"])
             records = dftemp.to_dict(orient="records")
             print(common_attributes)
 
     try:
         response = write_client.write_records(
-            DatabaseName=DB_NAME, TableName=TBL_NAME, Records=records, CommonAttributes=common_attributes
+            DatabaseName=DB_NAME,
+            TableName=TBL_NAME,
+            Records=records,
+            CommonAttributes=common_attributes,
         )
-        print("WriteRecords Status: [%s]" % response['ResponseMetadata']['HTTPStatusCode'])
+        print(
+            f"WriteRecords Status: [{response['ResponseMetadata']['HTTPStatusCode']}]"
+        )
     except write_client.exceptions.RejectedRecordsException as e:
         print("RejectedRecords: ", e)
         for rr in e.response["RejectedRecords"]:
-            print("Rejected Index " + str(rr["RecordIndex"]) + ": " + rr["Reason"])
+            print(f"Rejected Index {str(rr['RecordIndex'])}: {rr['Reason']}")
         print("Other records were written successfully. ")
     except Exception as e:
         print(f"An exception occured: {e}")
