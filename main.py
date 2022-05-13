@@ -89,8 +89,12 @@ def get_latest_timestamp():
     except Exception as e:
         print(f"An exception occured: {e}")
 
-    if response["Rows"][0]["Data"][0]["NullValue"] is True:
+    if response["Rows"][0]["Data"][0].get("NullValue") is True:
         return datetime.fromtimestamp(0)
+    else:
+        return datetime.strptime(
+            response["Rows"][0]["Data"][0]["ScalarValue"], "%Y-%m-%d %H:%M:%S.%f000"
+        )
 
 
 def sent_data_to_timestream(df):
