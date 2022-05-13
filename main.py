@@ -30,7 +30,14 @@ def main():
 
     latest_timestamp = get_latest_timestamp()
     df = get_homeassistant_data(latest_timestamp)
-    sent_data_to_timestream(df)
+    if df.empty:
+        print("No new data")
+        return
+
+    for chunk in chunk_df(df, 99):
+        print(f"Sending a chunk of {len(chunk)} record(s) to timestream")
+        sent_data_to_timestream(chunk)
+    print(f"Finished: Sent a total of {len(df)} record(s) to timestream")
 
 
 def get_homeassistant_data(latest_timestamp):
@@ -137,6 +144,11 @@ def sent_data_to_timestream(df):
                     print(f"Rejected Index {str(rr['RecordIndex'])}: {rr['Reason']}")
             except Exception as e:
                 print(f"An exception occured: {e}")
+
+
+def chunk_df(df, chunk_size):
+    for i in range(0, len(df), chunk_size):
+        yield df[i : i + chunk_size]
 
 
 main()
