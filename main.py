@@ -36,6 +36,7 @@ def get_homeassistant_data(latest_timestamp):
 
     if os.path.exists("./hass.json"):
         df = pd.read_json("./hass.json")
+        df = df[pd.to_datetime(df["Time"]).dt.to_pydatetime() > latest_timestamp]
         return df
 
     if os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB":
