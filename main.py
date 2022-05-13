@@ -11,7 +11,7 @@ def main():
     load_dotenv()
     latest_timestamp = get_latest_timestamp()
     df = get_homeassistant_data(latest_timestamp)
-    sent_data_to_timestream(df.head(10))
+    sent_data_to_timestream(df)
 
 
 def get_homeassistant_data(latest_timestamp):
