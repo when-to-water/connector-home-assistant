@@ -148,7 +148,7 @@ def sent_data_to_timestream(df):
 
 def chunk_df(df, chunk_size):
     for i in range(0, len(df), chunk_size):
-        yield df[i : i + chunk_size]
+        yield df[i : i + chunk_size]  # noqa: E203 false positive
 
 
 main()
