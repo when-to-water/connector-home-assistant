@@ -22,20 +22,31 @@ def main():
     )
     args = argparser.parse_args()
 
-    if args.dump_hass_df is False:
-        latest_timestamp = get_latest_timestamp()
-        df = get_homeassistant_data(latest_timestamp)
-        sent_data_to_timestream(df)
-    else:
-        print("Dumping homeassistant dataframe to json file (./hass.json)")
+    if args.dump_hass_df is True:
         df = get_homeassistant_data(datetime.fromtimestamp(0))
         df.to_json("./hass.json")
+        print("Dumping homeassistant dataframe to json file (./hass.json)")
+        return
+
+    latest_timestamp = get_latest_timestamp()
+    df = get_homeassistant_data(latest_timestamp)
+    if df.empty:
+        print("No new data")
+        return
+
+    for chunk in chunk_df(df, 99):
+        print(f"Sending a chunk of {len(chunk)} record(s) to timestream")
+        sent_data_to_timestream(chunk)
+    print(f"Finished: Sent a total of {len(df)} record(s) to timestream")
 
 
 def get_homeassistant_data(latest_timestamp):
 
     if os.path.exists("./hass.json"):
-        df = pd.read_json("./hass.json")
+        df = pd.read_json("./hass.json", dtype={"MeasureValue": "str", "Time": "str"})
+        df = df[
+            pd.to_datetime(df["Time"], unit="s").dt.to_pydatetime() > latest_timestamp
+        ]
         return df
 
     if os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_MARIADB":
@@ -53,11 +64,11 @@ def get_homeassistant_data(latest_timestamp):
     try:
         df = pd.read_sql(
             (
-                "SELECT state as MeasureValue,attributes, FLOOR(UNIX_TIMESTAMP(created)) as Time "
+                "SELECT state as MeasureValue,attributes, UNIX_Timestamp(CONVERT_TZ(created,'+02:00','+00:00')) as Time "
                 "FROM states "
                 "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
                 "AND created > %(latest_timestamp)s "
-                "ORDER BY `states`.`created` ASC"
+                "ORDER BY `states`.`created` DESC"
             ),
             engine,
             params={"latest_timestamp": latest_timestamp},
@@ -70,7 +81,7 @@ def get_homeassistant_data(latest_timestamp):
     df["SensorName"] = dftemp.apply(lambda x: x.get("friendly_name"))
     df["MeasureName"] = df["SensorName"].str.split(" ").str[1]
     df["SensorName"] = df["SensorName"].str[:5]
-    df["Time"] = df["Time"].apply(str)
+    df["Time"] = df["Time"].round(0).astype(int).apply(str)
     df = df[df["SensorName"].isin(["PWS_1", "PWS_2", "PWS_3"])]
     df.drop("attributes", inplace=True, axis=1)
     print(df.head())
@@ -89,8 +100,12 @@ def get_latest_timestamp():
     except Exception as e:
         print(f"An exception occured: {e}")
 
-    if response["Rows"][0]["Data"][0]["NullValue"] is True:
+    if response["Rows"][0]["Data"][0].get("NullValue") is True:
         return datetime.fromtimestamp(0)
+    else:
+        return datetime.strptime(
+            response["Rows"][0]["Data"][0]["ScalarValue"], "%Y-%m-%d %H:%M:%S.%f000"
+        )
 
 
 def sent_data_to_timestream(df):
@@ -109,29 +124,33 @@ def sent_data_to_timestream(df):
                     {"Name": "Unit", "Value": y},
                 ],
                 "MeasureValueType": "DOUBLE",
+                "TimeUnit": "SECONDS",
             }
             dftemp = df[(df["SensorName"] == x) & (df["Unit"] == y)]
             dftemp = dftemp.drop(columns=["SensorName", "Unit"])
             records = dftemp.to_dict(orient="records")
             print(common_attributes)
+            try:
+                response = write_client.write_records(
+                    DatabaseName=DB_NAME,
+                    TableName=TBL_NAME,
+                    Records=records,
+                    CommonAttributes=common_attributes,
+                )
+                print(
+                    f"WriteRecords Status: [{response['ResponseMetadata']['HTTPStatusCode']}]"
+                )
+            except write_client.exceptions.RejectedRecordsException as e:
+                print("RejectedRecords: ", e)
+                for rr in e.response["RejectedRecords"]:
+                    print(f"Rejected Index {str(rr['RecordIndex'])}: {rr['Reason']}")
+            except Exception as e:
+                print(f"An exception occured: {e}")
 
-    try:
-        response = write_client.write_records(
-            DatabaseName=DB_NAME,
-            TableName=TBL_NAME,
-            Records=records,
-            CommonAttributes=common_attributes,
-        )
-        print(
-            f"WriteRecords Status: [{response['ResponseMetadata']['HTTPStatusCode']}]"
-        )
-    except write_client.exceptions.RejectedRecordsException as e:
-        print("RejectedRecords: ", e)
-        for rr in e.response["RejectedRecords"]:
-            print(f"Rejected Index {str(rr['RecordIndex'])}: {rr['Reason']}")
-        print("Other records were written successfully. ")
-    except Exception as e:
-        print(f"An exception occured: {e}")
+
+def chunk_df(df, chunk_size):
+    for i in range(0, len(df), chunk_size):
+        yield df[i : i + chunk_size]  # noqa: E203 false positive
 
 
 main()
