@@ -64,7 +64,7 @@ def get_homeassistant_data(latest_timestamp):
     try:
         df = pd.read_sql(
             (
-                "SELECT state as MeasureValue,attributes, UNIX_Timestamp(CONVERT_TZ(created,'+02:00','+00:00')) as Time "
+                "SELECT state as MeasureValue,attributes, created as Time "
                 "FROM states "
                 "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
                 "AND created > %(latest_timestamp)s "
@@ -77,14 +77,13 @@ def get_homeassistant_data(latest_timestamp):
         print(f"An exception occured: {e}")
 
     dftemp = df["attributes"].apply(lambda x: ast.literal_eval(x))
-    df["Unit"] = dftemp.apply(lambda x: x.get("unit_of_measurement"))
     df["SensorName"] = dftemp.apply(lambda x: x.get("friendly_name"))
     df["MeasureName"] = df["SensorName"].str.split(" ").str[1]
     df["SensorName"] = df["SensorName"].str[:5]
-    df["Time"] = df["Time"].round(0).astype(int).apply(str)
     df = df[df["SensorName"].isin(["PWS_1", "PWS_2", "PWS_3"])]
+    df["Unit"] = dftemp.apply(lambda x: x.get("unit_of_measurement"))
+    df["Time"] = df["Time"].astype(int).astype(str)
     df.drop("attributes", inplace=True, axis=1)
-    print(df.head())
     return df
 
 
@@ -115,21 +114,20 @@ def sent_data_to_timestream(df):
     TBL_NAME = "sensor-data"
     response = ""
 
-    for x in pd.unique(df["SensorName"]):
-        for y in pd.unique(df["Unit"]):
+    for sensor_name in pd.unique(df["SensorName"]):
+        for unit in pd.unique(df["Unit"]):
             records = []
             common_attributes = {
                 "Dimensions": [
-                    {"Name": "SensorName", "Value": x},
-                    {"Name": "Unit", "Value": y},
+                    {"Name": "sensor_name", "Value": sensor_name},
+                    {"Name": "unit", "Value": unit},
                 ],
                 "MeasureValueType": "DOUBLE",
-                "TimeUnit": "SECONDS",
+                "TimeUnit": "NANOSECONDS",
             }
-            dftemp = df[(df["SensorName"] == x) & (df["Unit"] == y)]
+            dftemp = df[(df["SensorName"] == sensor_name) & (df["Unit"] == unit)]
             dftemp = dftemp.drop(columns=["SensorName", "Unit"])
             records = dftemp.to_dict(orient="records")
-            print(common_attributes)
             try:
                 response = write_client.write_records(
                     DatabaseName=DB_NAME,
