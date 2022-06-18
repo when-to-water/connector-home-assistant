@@ -107,7 +107,7 @@ def get_latest_timestamp():
         )
 
 
-def sent_data_to_timestream(df):
+def send_data_to_timestream(df):
 
     write_client = boto3.client("timestream-write")
     DB_NAME = "when-to-water"
