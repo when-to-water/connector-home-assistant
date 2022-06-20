@@ -36,7 +36,7 @@ def main():
 
     for chunk in chunk_df(df, 99):
         print(f"Sending a chunk of {len(chunk)} record(s) to timestream")
-        sent_data_to_timestream(chunk)
+        send_data_to_timestream(chunk)
     print(f"Finished: Sent a total of {len(df)} record(s) to timestream")
 
 
