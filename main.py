@@ -1,6 +1,7 @@
 import argparse
 import ast
 import os
+import requests
 from datetime import datetime
 
 import boto3
@@ -32,12 +33,14 @@ def main():
     df = get_homeassistant_data(latest_timestamp)
     if df.empty:
         print("No new data")
+        telegram_bot_sendtext("No new data")
         return
 
     for chunk in chunk_df(df, 99):
         print(f"Sending a chunk of {len(chunk)} record(s) to timestream")
         send_data_to_timestream(chunk)
     print(f"Finished: Sent a total of {len(df)} record(s) to timestream")
+    telegram_bot_sendtext(f"Finished: Sent a total of {len(df)} record(s) to timestream")
 
 
 def get_homeassistant_data(latest_timestamp):
@@ -82,7 +85,7 @@ def get_homeassistant_data(latest_timestamp):
     df["SensorName"] = df["SensorName"].str[:5]
     df = df[df["SensorName"].isin(["PWS_1", "PWS_2", "PWS_3"])]
     df["Unit"] = dftemp.apply(lambda x: x.get("unit_of_measurement"))
-    df["Time"] = df["Time"].astype(int).astype(str)
+    df["Time"] = df["Time"].astype('int64').astype(str)
     df.drop("attributes", inplace=True, axis=1)
     return df
 
@@ -144,11 +147,16 @@ def send_data_to_timestream(df):
                     print(f"Rejected Index {str(rr['RecordIndex'])}: {rr['Reason']}")
             except Exception as e:
                 print(f"An exception occured: {e}")
+                telegram_bot_sendtext(f"An exception occured: {e}")
 
 
 def chunk_df(df, chunk_size):
     for i in range(0, len(df), chunk_size):
         yield df[i : i + chunk_size]  # noqa: E203 false positive
 
+def telegram_bot_sendtext(bot_message):
+    send_text = 'https://api.telegram.org/bot' + os.getenv("TELEGRAM_BOT_TOKEN") + '/sendMessage?chat_id=' + os.getenv("TELEGRAM_CHAT_ID") + '&parse_mode=Markdown&text=' + bot_message
+    response = requests.get(send_text)
+    return 
 
 main()

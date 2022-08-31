@@ -1,19 +1,18 @@
 [[source]]
-url = "https://pypi.org/simple"
+url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
 [packages]
 sqlalchemy = "*"
+numpy = "*"
 pandas = "*"
 python-dotenv = "*"
 pymysql = "*"
 boto3 = "*"
+requests = "*"
 
 [dev-packages]
-black = "*"
-flake8 = "*"
-bandit = "*"
 
 [requires]
-python_version = "3.9"
+python_version = "3.7"
