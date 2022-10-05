@@ -59,20 +59,32 @@ def get_homeassistant_data(latest_timestamp):
             f"@{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_HOST')}:{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_PORT')}"
             f"/{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_DATABASE')}"
         )
+        strSQL = (
+            "SELECT state as MeasureValue,attributes, created as Time "
+            "FROM states "
+            "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
+            "AND created > %(latest_timestamp)s "
+            "ORDER BY `states`.`created` DESC"
+        )
+    elif os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_SQLITE":
+        strEngine = (
+            f"sqlite+pysqlite:///{os.getenv('WTW_CONNECTOR_HOMEASSISTANT_RECORDER_DATABASE')}"
+        )
+        strSQL = (
+                "SELECT state as MeasureValue,attributes, created as Time "
+                "FROM states "
+                "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
+                "AND created > :latest_timestamp "
+                "ORDER BY `states`.`created` DESC"
+            )
     else:
         exit(f"Connector type '{os.getenv('WTW_CONNECTOR_TYPE')}' not supported")
 
     engine = sqlalchemy.create_engine(strEngine)
 
-    try:
+    try: 
         df = pd.read_sql(
-            (
-                "SELECT state as MeasureValue,attributes, created as Time "
-                "FROM states "
-                "WHERE entity_id LIKE '%%efekta%%'and state <>'unavailable' "
-                "AND created > %(latest_timestamp)s "
-                "ORDER BY `states`.`created` DESC"
-            ),
+            strSQL,
             engine,
             params={"latest_timestamp": latest_timestamp},
         )
@@ -85,6 +97,8 @@ def get_homeassistant_data(latest_timestamp):
     df["SensorName"] = df["SensorName"].str[:5]
     df = df[df["SensorName"].isin(["PWS_1", "PWS_2", "PWS_3"])]
     df["Unit"] = dftemp.apply(lambda x: x.get("unit_of_measurement"))
+    if os.getenv("WTW_CONNECTOR_TYPE") == "HOMEASSISTANT_RECORDER_SQLITE":
+        df["Time"] = pd.to_datetime(df["Time"])
     df["Time"] = df["Time"].astype('int64').astype(str)
     df.drop("attributes", inplace=True, axis=1)
     return df
