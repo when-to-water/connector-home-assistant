@@ -130,3 +130,6 @@ dmypy.json
 
 # json dump
 hass.json
+
+# aws
+credentials
