@@ -13,15 +13,36 @@ WTW_CONNECTOR_HOMEASSISTANT_RECORDER_PORT=
 WTW_CONNECTOR_HOMEASSISTANT_RECORDER_DATABASE=
 ```
 
-## Installation
+### Installation
 
 ```Shell
 pipenv install
 ```
 
-## Run
+### Run
 
 ```Shell
 pipenv shell
 python main.py
+```
+
+## Docker
+
+Fill the aws `credentials`-file in /aws/credentials:
+```
+[default]
+region=<AWS_REGION>
+aws_access_key_id=<AWS_ACCESS_KEY_ID>
+aws_secret_access_key=<AWS_SECRET_ACCESS_KEY>
+```
+
+### Build
+Navigate to the directory of the Dockerfile and run:
+```Shell
+docker build -t connector-hass .
+```
+
+### Run container
+```Shell
+docker run -dt -v $(pwd):/home/awsuser/connector-hass --name connector-hass onnector-hass
 ```
