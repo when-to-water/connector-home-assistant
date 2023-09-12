@@ -41,7 +41,6 @@ def main():
 
 
 def get_homeassistant_data(latest_timestamp):
-
     if os.path.exists("./hass.json"):
         df = pd.read_json("./hass.json", dtype={"MeasureValue": "str", "Time": "str"})
         df = df[
@@ -88,13 +87,14 @@ def get_homeassistant_data(latest_timestamp):
 
 
 def get_latest_timestamp():
-
     read_client = boto3.client("timestream-query")
 
     response = ""
     try:
         response = read_client.query(
-            QueryString='SELECT Max(time) AS MaxTimestamp FROM "when-to-water"."sensor-data"'
+            QueryString=(
+                'SELECT Max(time) AS MaxTimestamp FROM "when-to-water"."sensor-data"'
+            )
         )
     except Exception as e:
         print(f"An exception occured: {e}")
@@ -108,7 +108,6 @@ def get_latest_timestamp():
 
 
 def send_data_to_timestream(df):
-
     write_client = boto3.client("timestream-write")
     DB_NAME = "when-to-water"
     TBL_NAME = "sensor-data"
@@ -136,7 +135,8 @@ def send_data_to_timestream(df):
                     CommonAttributes=common_attributes,
                 )
                 print(
-                    f"WriteRecords Status: [{response['ResponseMetadata']['HTTPStatusCode']}]"
+                    "WriteRecords Status:"
+                    f" [{response['ResponseMetadata']['HTTPStatusCode']}]"
                 )
             except write_client.exceptions.RejectedRecordsException as e:
                 print("RejectedRecords: ", e)
